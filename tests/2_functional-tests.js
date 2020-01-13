@@ -96,12 +96,22 @@ suite('Functional Tests', function() {
           .get('/api/books/11111111111')
           .end((err, res) => {
             assert.equal(res.status, 200)
-            assert.equal(res.text)
+            assert.equal(res.text, 'Book ID does not exist')
+            done()
         })
       });
       
       test('Test GET /api/books/[id] with valid id in db',  function(done){
-        done();
+        chai.request(server)
+          .get('/api/books/' + id)
+          .end((err, res) => {
+            assert.equal(res.status, 200)
+            assert.property(res.body, 'title', 'Books in array should contain title')
+            assert.property(res.body, '_id', 'Books in array should contain _id')
+            assert.isArray(res.body.comments, 'Comments should be an array')
+            done()
+        })
+        
       });
       
     });
@@ -110,7 +120,15 @@ suite('Functional Tests', function() {
     suite('POST /api/books/[id] => add comment/expect book object with id', function(){
       
       test('Test POST /api/books/[id] with comment', function(done){
-        done();
+        chai.request(server)
+          .post('/api/books/' + id)
+          .send({comment: 'comment'})
+          .end((err, res) => {
+            assert.equal(res.status, 200);
+            assert.isArray(res.body.comments);
+            assert.include(res.body.comments, 'comment')
+            done();
+          });
       });
       
     });

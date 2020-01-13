@@ -98,9 +98,10 @@ module.exports = function(app) {
       if(!bookid) {
         res.send('In put book ID to search')
       } else{
-        if(!ObjectId.isValid(bookid)) {
-          bookid
-          console.log('Book ID: ' + ObjectId(bookid) )}
+        
+        if(ObjectId.isValid(bookid)) {
+          bookid = ObjectId(bookid)
+        }
         MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) => {
           if(err) console.log('Database error: ' + err)
           else{

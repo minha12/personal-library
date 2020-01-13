@@ -31,12 +31,14 @@ module.exports = function(app) {
             .toArray((err, docs) => {
               if (err) console.log("Error while finding books");
               else {
-                console.log(docs);
+                
                 let result = {}
                 result = docs.map(item => {
                   item.commentcount = item.comments ? item.comments.length : 0 
+                  return item
                 })
-                res.send(docs);
+                console.log(result);
+                res.send(result);
               }
             });
         }
@@ -79,6 +81,23 @@ module.exports = function(app) {
     .get(function(req, res) {
       var bookid = req.params.id;
       //json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}
+      if(!bookid) {
+        res.send('In put book ID to search')
+      } else{
+        MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) => {
+          if(err) console.log('Database error: ' + err)
+          else{
+            db.collection('BookLib').findOne({_id: ObjectId(bookid)}, (err, doc) => {
+              if(err) console.log('Error while finding book: ' + err)
+              else{
+                doc.comments = doc.comments ? doc.comments : []
+                console.log(doc)
+                res.send(doc)
+              }
+            })
+          }
+        })
+      }
     })
 
     .post(function(req, res) {

@@ -14,7 +14,7 @@ var server = require('../server');
 chai.use(chaiHttp);
 
 suite('Functional Tests', function() {
-
+  
   /*
   * ----[EXAMPLE TEST]----
   * Each test should completely test the response of the API end-point including response status code!
@@ -36,8 +36,7 @@ suite('Functional Tests', function() {
   */
 
   suite('Routing tests', function() {
-
-
+    var id
     suite('POST /api/books with title => create book object/expect book object', function() {
       
       test('Test POST /api/books with title', function(done) {
@@ -82,6 +81,7 @@ suite('Functional Tests', function() {
             assert.property(res.body[0], 'commentcount', 'Books in array should contain commentcount');
             assert.property(res.body[0], 'title', 'Books in array should contain title');
             assert.property(res.body[0], '_id', 'Books in array should contain _id');
+            id = res.body[0]._id  
             done();
           });
       });      
@@ -92,7 +92,12 @@ suite('Functional Tests', function() {
     suite('GET /api/books/[id] => book object with [id]', function(){
       
       test('Test GET /api/books/[id] with id not in db',  function(done){
-        done();
+        chai.request(server)
+          .get('/api/books/11111111111')
+          .end((err, res) => {
+            assert.equal(res.status, 200)
+            assert.equal(res.text)
+        })
       });
       
       test('Test GET /api/books/[id] with valid id in db',  function(done){

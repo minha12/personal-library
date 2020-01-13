@@ -104,9 +104,13 @@ module.exports = function(app) {
             db.collection('BookLib').findOne({_id: ObjectId(bookid)}, (err, doc) => {
               if(err) console.log('Error while finding book: ' + err)
               else{
-                doc.comments = doc.comments ? doc.comments : []
-                console.log(doc)
-                res.send(doc)
+                if(doc.length === 0) {
+                  res.send('Book ID does not exist')
+                }else {
+                  doc.comments = doc.comments ? doc.comments : []
+                  console.log(doc)
+                  res.send(doc)
+                }
               }
             })
           }

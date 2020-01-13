@@ -28,7 +28,25 @@ module.exports = function (app) {
       var title = req.body.title;
       //response will contain new book object including atleast _id and title
       console.log('Title: ' + title)
-      MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) )
+      if(!title) {
+        console.log('Please enter a book title')
+        res.send('Please enter a book title')
+      } else{
+        MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) => {
+        if(err) console.log('Database error: ' + err)
+        else{
+          console.log('Successfully connected to MongoDB')
+          db.collection('BookLib').insertOne({title: title}, (err, doc) => {
+            if(err) console.log('Error while inserting new book: ' + err)
+            else{
+              console.log({title: doc})
+              res.json(doc)
+            }
+          })
+        }
+      })
+            }
+      
     })
     
     .delete(function(req, res){

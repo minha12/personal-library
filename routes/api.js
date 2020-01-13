@@ -22,9 +22,13 @@ module.exports = function (app) {
       //json res format: [{"_id": bookid, "title": book_title, "commentcount": num_of_comments },...]
     })
     
+    //I can post a title to /api/books to add a book and returned will be the object 
+    //with the title and a unique _id.
     .post(function (req, res){
       var title = req.body.title;
       //response will contain new book object including atleast _id and title
+      console.log('Title: ' + title)
+      MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) )
     })
     
     .delete(function(req, res){

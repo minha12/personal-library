@@ -79,7 +79,7 @@ module.exports = function(app) {
         else{
           console.log('Connected to DB')
           db.collection('BookLib').deleteMany({}, (err, doc) => {
-            err? res.send('Complete delete unsuccessful') : res.send('Complete delete successful')
+            err ? res.send('Complete delete unsuccessful') : res.send('Complete delete successful')
           })
         }
       })
@@ -149,7 +149,12 @@ module.exports = function(app) {
         else{
           console.log('Connected to MongoDB')
           db.collection('BookLib').remove({_id: ObjectId(bookid)}, (err, doc) => {
-            err ? res.send('Delete Unsuccessful') : res.send('Delete successful') 
+            if(err) { 
+              console.log('Delete Unsuccessful')
+              res.send('Delete Unsuccessful') 
+            } else { 
+              console.log('Delete successful')
+              res.send('Delete successful') }
           })
         }
       })

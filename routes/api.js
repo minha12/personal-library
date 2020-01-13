@@ -104,6 +104,32 @@ module.exports = function(app) {
       var bookid = req.params.id;
       var comment = req.body.comment;
       //json res format same as .get
+      if(!bookid) {
+        console.log('Inseart a book ID to add comments')
+        res.send('Insert a book ID to add comments')
+      }else{
+        MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) => {
+          if(err) console.log('Database error: ' + err)
+          else{
+            console.log('Successfully connect to MongoDB')
+            db.collection.findAndModify(
+              {_id: ObjectId(bookid)},
+              {},
+              {$push: {comments: comment}},
+              {new: true},
+              (err, doc) => {
+                if(err){
+                  console.log('Adding comment unsuccessful')
+                  res.send('Adding comment unsuccessful')
+                }else{
+                  console.log(doc)
+                  
+                }
+              }
+            )
+          }
+        })
+      }
     })
 
     .delete(function(req, res) {

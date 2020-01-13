@@ -30,7 +30,7 @@ module.exports = function (app) {
             if(err) console.log('Error while finding books')
             else{
               console.log(doc)
-              res.send()
+              res.send(doc)
             }
           })
         }
@@ -56,7 +56,7 @@ module.exports = function (app) {
             if(err) console.log('Error while inserting new book: ' + err)
             else{
               console.log(book)
-              res.json(book)
+              res.send(book)
             }
           })
         }

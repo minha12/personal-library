@@ -98,20 +98,22 @@ module.exports = function(app) {
       if(!bookid) {
         res.send('In put book ID to search')
       } else{
+        console.log('Book ID: ' + )
         MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) => {
           if(err) console.log('Database error: ' + err)
           else{
             db.collection('BookLib').findOne({_id: ObjectId(bookid)}, (err, doc) => {
-              if(err) console.log('Error while finding book: ' + err)
-              else{
-                if(doc.length === 0) {
-                  res.send('Book ID does not exist')
-                }else {
-                  doc.comments = doc.comments ? doc.comments : []
-                  console.log(doc)
-                  res.send(doc)
-                }
+              if(err) console.log(err)
+              
+              if(!doc) {
+                console.log('Book ID does not exist')
+                res.send('Book ID does not exist')
+              }else {
+                doc.comments = doc.comments ? doc.comments : []
+                console.log(doc)
+                res.send(doc)
               }
+              
             })
           }
         })

@@ -17,9 +17,24 @@ const MONGODB_CONNECTION_STRING = process.env.DB;
 module.exports = function (app) {
 
   app.route('/api/books')
+    //4.I can get /api/books to retrieve an aray of all books containing 
+    //title, _id, & commentcount
     .get(function (req, res){
       //response will be array of book objects
       //json res format: [{"_id": bookid, "title": book_title, "commentcount": num_of_comments },...]
+      MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) => {
+        if(err) console.log('Database error: ' + err)
+        else{
+          console.log('Successfully connected to MongoDB')
+          db.collection('BookLib').find({}).toArray((err, doc) => {
+            if(err) console.log('Error while finding books')
+            else{
+              console.log(doc)
+              res.send()
+            }
+          })
+        }
+      })
     })
     
     //I can post a title to /api/books to add a book and returned will be the object 
@@ -32,15 +47,16 @@ module.exports = function (app) {
         console.log('Please enter a book title')
         res.send('Please enter a book title')
       } else{
+        var book = {title: title}
         MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) => {
         if(err) console.log('Database error: ' + err)
         else{
           console.log('Successfully connected to MongoDB')
-          db.collection('BookLib').insertOne({title: title}, (err, doc) => {
+          db.collection('BookLib').insertOne(book, (err, doc) => {
             if(err) console.log('Error while inserting new book: ' + err)
             else{
-              console.log({title: doc})
-              res.json(doc)
+              console.log(book)
+              res.json(book)
             }
           })
         }

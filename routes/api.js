@@ -98,11 +98,13 @@ module.exports = function(app) {
       if(!bookid) {
         res.send('In put book ID to search')
       } else{
-        console.log('Book ID: ' + )
+        if(!ObjectId.isValid(bookid)) {
+          bookid
+          console.log('Book ID: ' + ObjectId(bookid) )}
         MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) => {
           if(err) console.log('Database error: ' + err)
           else{
-            db.collection('BookLib').findOne({_id: ObjectId(bookid)}, (err, doc) => {
+            db.collection('BookLib').findOne({_id: bookid}, (err, doc) => {
               if(err) console.log(err)
               
               if(!doc) {

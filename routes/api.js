@@ -79,7 +79,12 @@ module.exports = function(app) {
         else{
           console.log('Connected to DB')
           db.collection('BookLib').deleteMany({}, (err, doc) => {
-            err ? res.send('Complete delete unsuccessful') : res.send('Complete delete successful')
+            if(err) { 
+              console.log('Complete delete unsuccessful')
+              res.send('Complete delete unsuccessful')
+            } else { 
+              console.log('Complete delete successful')
+              res.send('Complete delete successful')}
           })
         }
       })

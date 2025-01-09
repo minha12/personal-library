@@ -1,85 +1,188 @@
-<html>
-  <head>
-    <title>FCC ISQA Project - Personal Library</title>
-    <meta name="description" content="A cool thing made with HyperDev">
-    <link id="favicon" rel="icon" href="https://hyperdev.com/favicon-app.ico" type="image/x-icon">
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Personal Library - Modern Book Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="/public/style.css">
-  </head>
-  <body>
-    <header>
-      <h1>
-        <b>ISQA Project</b> - Personal Library
-      </h1>
-    </header>
-    <br>
-    <div id="userstories">
-      <h2>User stories:</h2>
-      <ol>
-        <li>Nothing from my website will be cached in my client as a security measure.</li>
-        <li>I will see that the site is powered by 'PHP 4.2.0' even though it isn't as a security measure.</li>
-        <li>I can <b>post</b> a <code>title</code> to /api/books to add a book and returned will be the object with the <code>title</code> and a unique <code>_id</code>.</li>
-        <li>I can <b>get</b> /api/books to retrieve an aray of all books containing <code>title</code>, <code>_id</code>, & <code>commentcount</code>.</li>
-        <li>I can <b>get</b> /api/books/{_id} to retrieve a single object of a book containing <code>title</code>, <code>_id</code>, & an array of <code>comments</code> (empty array if no comments present).</li>
-        <li>I can <b>post</b> a <code>comment</code> to /api/books/{_id} to add a comment to a book and returned will be the books object similar to <b>get</b> /api/books/{_id}.</li>
-        <li>I can <b>delete</b> /api/books/{_id} to delete a book from the collection. Returned will be 'delete successful' if successful.</li>
-        <li>If I try to request a book that doesn't exist I will get a 'no book exists' message.</li>
-        <li>I can send a <b>delete</b> request to /api/books to delete all books in the database. Returned will be 'complete delete successful' if successful.</li>
-        <li>All 6 functional tests required are complete and passing.</li>
-      </ol>
-      <br>
-      <img src='https://cdn.gomix.com/d7932c52-287f-4dae-b175-631fef453000%2FScreen%20Shot%202016-12-16%20at%201.35.56%20AM.png' />
-    </div>
-    <hr style='margin: 50px'>
-    <div id ='sampleposting'>
-      <h2 style="text-align: left">Test API responses:</h2>
-      <form action="/api/books" method="post" class="border">
-        <h4>Test post to /api/books</h4>
-        Book Title:<br>
-        <input type="text" name="title" value=""><br>
-        <input type="submit" value="Submit">
-      </form>
-      <form action="" method="post" id="commentTest" class="border">
-        <h4>Test post to /api/books/{bookid}</h4>
-        BookId to comment on:<br>
-        <input type="text" name="id" value="" id="idinputtest"><br>
-        Comment:<br>
-        <input type="text" name="comment" value=""><br>
-        <input type="submit" value="Submit">
-      </form>
-    </div>
-    <hr style='margin: 50px'>
-    <div id='sampleui'>
-      <h2 style="text-align: left">Sample Front-End:</h2>
-      <form id="newBookForm" class="border">
-        <input type="text" id="bookTitleToAdd" name="title" placeholder="New Book Title" style="width: 295px">
-        <button type="submit" value="Submit" id="newBook">Submit New Book!</button>
-      </form>
-      <div id='display'></div>          
-      <div id='bookDetail' class='border'>
-        <p id='detailTitle'>Select a book to see it's details and comments</p>
-        <ol id='detailComments'></ol>
-      </div>
-      <button id='deleteAllBooks'>Delete all books...</button>
-    </div>
-    <hr style='margin: 50px'>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="bi bi-book"></i> Personal Library</a>
+        </div>
+    </nav>
 
-    <script src="https://code.jquery.com/jquery-2.2.1.min.js"
-            integrity="sha256-gvQgAFzTH6trSrAWoH1iPo9Xc96QxSZ3feW6kem+O00="
-            crossorigin="anonymous"></script>
-    <script src="/public/client.js"></script>           
-    <script>
-      /*
-      *  For #sampleposting to update form action url to test inputs book id
-      */
-      $(function() {
-       $('#commentTest').submit(function(){
-         var id = $('#idinputtest').val();
-         $(this).attr('action', "/api/books/" + id);
-       });
-      });
-   </script>
-  </body>
+    <div class="container mt-4">
+        <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="library-tab" data-bs-toggle="tab" href="#library">Library</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="api-tab" data-bs-toggle="tab" href="#api">API Documentation</a>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3">
+            <!-- Library Tab -->
+            <div class="tab-pane fade show active" id="library">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Add New Book</h5>
+                                <form id="newBookForm">
+                                    <div class="mb-3">
+                                        <input type="text" class="form-control" id="bookTitleToAdd" name="title" placeholder="Enter book title">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" id="newBook">Add Book</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card mt-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Book List</h5>
+                                <div id="display" class="list-group"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title" id="detailTitle">Select a book to see details</h5>
+                                <div id="bookDetail">
+                                    <div id="detailComments"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button id="deleteAllBooks" class="btn btn-danger mt-3">
+                    <i class="bi bi-trash"></i> Delete All Books
+                </button>
+            </div>
+
+            <!-- API Documentation Tab -->
+            <div class="tab-pane fade" id="api">
+                <div class="card">
+                    <div class="card-body">
+                        <h3>API Documentation</h3>
+                        <div class="alert alert-info">
+                            <h5><i class="bi bi-shield-lock"></i> Security Features</h5>
+                            <ul class="mb-0">
+                                <li>No client-side caching for enhanced security</li>
+                                <li>Server appears as PHP 4.2.0 (security through obscurity)</li>
+                            </ul>
+                        </div>
+
+                        <div class="endpoint-list">
+                            <!-- POST /api/books -->
+                            <div class="endpoint-item">
+                                <span class="badge bg-success">POST</span>
+                                <code>/api/books</code>
+                                <p>Add a new book to the collection</p>
+                                <div class="mt-2">
+                                    <strong>Request Body:</strong>
+                                    <pre><code>{
+  "title": "string" // required
+}</code></pre>
+                                    <strong>Response:</strong>
+                                    <pre><code>{
+  "_id": "string",
+  "title": "string"
+}</code></pre>
+                                </div>
+                            </div>
+
+                            <!-- GET /api/books -->
+                            <div class="endpoint-item">
+                                <span class="badge bg-primary">GET</span>
+                                <code>/api/books</code>
+                                <p>Retrieve all books in the collection</p>
+                                <div class="mt-2">
+                                    <strong>Response:</strong>
+                                    <pre><code>[{
+  "_id": "string",
+  "title": "string",
+  "commentcount": number
+}]</code></pre>
+                                </div>
+                            </div>
+
+                            <!-- GET /api/books/{_id} -->
+                            <div class="endpoint-item">
+                                <span class="badge bg-primary">GET</span>
+                                <code>/api/books/{_id}</code>
+                                <p>Retrieve a specific book by ID</p>
+                                <div class="mt-2">
+                                    <strong>Response:</strong>
+                                    <pre><code>{
+  "_id": "string",
+  "title": "string",
+  "comments": ["string"]
+}</code></pre>
+                                    <div class="alert alert-warning">
+                                        Returns "no book exists" if ID not found
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- POST /api/books/{_id} -->
+                            <div class="endpoint-item">
+                                <span class="badge bg-success">POST</span>
+                                <code>/api/books/{_id}</code>
+                                <p>Add a comment to a specific book</p>
+                                <div class="mt-2">
+                                    <strong>Request Body:</strong>
+                                    <pre><code>{
+  "comment": "string" // required
+}</code></pre>
+                                    <strong>Response:</strong>
+                                    <pre><code>{
+  "_id": "string",
+  "title": "string",
+  "comments": ["string"]
+}</code></pre>
+                                </div>
+                            </div>
+
+                            <!-- DELETE /api/books/{_id} -->
+                            <div class="endpoint-item">
+                                <span class="badge bg-danger">DELETE</span>
+                                <code>/api/books/{_id}</code>
+                                <p>Delete a specific book</p>
+                                <div class="mt-2">
+                                    <strong>Response:</strong>
+                                    <pre><code>"delete successful"</code></pre>
+                                </div>
+                            </div>
+
+                            <!-- DELETE /api/books -->
+                            <div class="endpoint-item">
+                                <span class="badge bg-danger">DELETE</span>
+                                <code>/api/books</code>
+                                <p>Delete all books in the collection</p>
+                                <div class="mt-2">
+                                    <strong>Response:</strong>
+                                    <pre><code>"complete delete successful"</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-success mt-4">
+                            <h5><i class="bi bi-check-circle"></i> Testing</h5>
+                            <p class="mb-0">All 6 functional tests are complete and passing.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/public/client.js"></script>
+</body>
 </html>

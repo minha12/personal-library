@@ -1,87 +1,159 @@
-$( document ).ready(function() {
-  var items = [];
-  var itemsRaw = [];
-  
-  $.getJSON('/api/books', function(data) {
-    //var items = [];
-    itemsRaw = data;
-    $.each(data, function(i, val) {
-      items.push('<li class="bookItem" id="' + i + '">' + val.title + ' - ' + val.commentcount + ' comments</li>');
-      return ( i !== 14 );
-    });
-    if (items.length >= 15) {
-      items.push('<p>...and '+ (data.length - 15)+' more!</p>');
+$(document).ready(function() {
+    let items = [];
+    let itemsRaw = [];
+    
+    function loadBooks() {
+        $.getJSON('/api/books', function(data) {
+            itemsRaw = data;
+            items = [];
+            data.forEach((val, i) => {
+                items.push(`
+                    <button class="list-group-item list-group-item-action bookItem d-flex justify-content-between align-items-center" id="${i}">
+                        ${val.title}
+                        <span class="badge bg-primary rounded-pill">${val.commentcount}</span>
+                    </button>
+                `);
+            });
+            
+            $('#display').html(items.join(''));
+        });
     }
-    $('<ul/>', {
-      'class': 'listWrapper',
-      html: items.join('')
-      }).appendTo('#display');
-  });
-  
-  var comments = [];
-  $('#display').on('click','li.bookItem',function() {
-    $("#detailTitle").html('<b>'+itemsRaw[this.id].title+'</b> (id: '+itemsRaw[this.id]._id+')');
-    $.getJSON('/api/books/'+itemsRaw[this.id]._id, function(data) {
-      comments = [];
-      $.each(data.comments, function(i, val) {
-        comments.push('<li>' +val+ '</li>');
-      });
-      comments.push('<br><form id="newCommentForm"><input style="width:300px" type="text" class="form-control" id="commentToAdd" name="comment" placeholder="New Comment"></form>');
-      comments.push('<br><button class="btn btn-info addComment" id="'+ data._id+'">Add Comment</button>');
-      comments.push('<button class="btn btn-danger deleteBook" id="'+ data._id+'">Delete Book</button>');
-      $('#detailComments').html(comments.join(''));
+
+    loadBooks();
+
+    // Book detail click handler
+    $('#display').on('click', '.bookItem', function() {
+        $('.bookItem').removeClass('active');
+        $(this).addClass('active');
+        
+        const book = itemsRaw[this.id];
+        $("#detailTitle").html(`
+            <div class="d-flex justify-content-between align-items-center">
+                <h4>${book.title}</h4>
+                <small class="text-muted">ID: ${book._id}</small>
+            </div>
+        `);
+
+        $.getJSON('/api/books/' + book._id, function(data) {
+            const comments = data.comments.map(comment => 
+                `<div class="comment-item">${comment}</div>`
+            ).join('');
+
+            $('#detailComments').html(`
+                <div class="comments-section mb-3">
+                    <h5>Comments (${data.comments.length})</h5>
+                    ${comments}
+                </div>
+                <form id="newCommentForm" class="mb-3">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="commentToAdd" name="comment" placeholder="Add a comment">
+                        <button class="btn btn-primary addComment" type="button" id="${data._id}">
+                            <i class="bi bi-plus"></i> Add
+                        </button>
+                    </div>
+                </form>
+                <button class="btn btn-outline-danger deleteBook" id="${data._id}">
+                    <i class="bi bi-trash"></i> Delete Book
+                </button>
+            `);
+        });
     });
-  });
-  
-  $('#bookDetail').on('click','button.deleteBook',function() {
-    $.ajax({
-      url: '/api/books/'+this.id,
-      type: 'delete',
-      success: function(data) {
-        //update list
-        $('#detailComments').html('<p style="color: red;">'+data+'<p><p>Refresh the page</p>');
-      }
+
+    // Delete book handler
+    $('#bookDetail').on('click', '.deleteBook', function() {
+        if (confirm('Are you sure you want to delete this book?')) {
+            $.ajax({
+                url: '/api/books/' + this.id,
+                type: 'delete',
+                success: function(data) {
+                    $('#detailComments').html(`
+                        <div class="alert alert-success">
+                            ${data}
+                        </div>
+                    `);
+                    loadBooks();
+                }
+            });
+        }
     });
-  });  
-  
-  $('#bookDetail').on('click','button.addComment',function() {
-    var newComment = $('#commentToAdd').val();
-    $.ajax({
-      url: '/api/books/'+this.id,
-      type: 'post',
-      dataType: 'json',
-      data: $('#newCommentForm').serialize(),
-      success: function(data) {
-        comments.unshift(newComment); //adds new comment to top of list
-        $('#detailComments').html(comments.join(''));
-      }
+
+    // Add comment handler
+    $('#bookDetail').on('click', '.addComment', function() {
+        const newComment = $('#commentToAdd').val();
+        const bookId = $(this).attr('id');
+        
+        if (!newComment) return;
+
+        $.ajax({
+            url: '/api/books/' + bookId,
+            type: 'post',
+            dataType: 'json',
+            data: $('#newCommentForm').serialize(),
+            success: function(data) {
+                // Refresh the book details to show new comment
+                $.getJSON('/api/books/' + bookId, function(bookData) {
+                    const comments = bookData.comments.map(comment => 
+                        `<div class="comment-item">${comment}</div>`
+                    ).join('');
+
+                    $('#detailComments').html(`
+                        <div class="comments-section mb-3">
+                            <h5>Comments (${bookData.comments.length})</h5>
+                            ${comments}
+                        </div>
+                        <form id="newCommentForm" class="mb-3">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="commentToAdd" name="comment" placeholder="Add a comment">
+                                <button class="btn btn-primary addComment" type="button" id="${bookData._id}">
+                                    <i class="bi bi-plus"></i> Add
+                                </button>
+                            </div>
+                        </form>
+                        <button class="btn btn-outline-danger deleteBook" id="${bookData._id}">
+                            <i class="bi bi-trash"></i> Delete Book
+                        </button>
+                    `);
+                });
+                
+                // Clear the comment input
+                $('#commentToAdd').val('');
+            },
+            error: function(xhr, status, error) {
+                alert('Error adding comment: ' + error);
+            }
+        });
     });
-  });
-  
-  $('#newBook').click(function() {
-    $.ajax({
-      url: '/api/books',
-      type: 'post',
-      dataType: 'json',
-      data: $('#newBookForm').serialize(),
-      success: function(data) {
-        //update list
-      }
+
+    // New book handler
+    $('#newBookForm').submit(function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: '/api/books',
+            type: 'post',
+            dataType: 'json',
+            data: $(this).serialize(),
+            success: function(data) {
+                loadBooks();
+                $('#bookTitleToAdd').val('');
+            }
+        });
     });
-  });
-  
-  $('#deleteAllBooks').click(function() {
-    $.ajax({
-      url: '/api/books',
-      type: 'delete',
-      dataType: 'json',
-      data: $('#newBookForm').serialize(),
-      success: function(data) {
-        //update list
-        $('#detailComments').html('<p style="color: red;">'+data+'<p><p>Refresh the page</p>');
-        console.log(data)
-      }
+
+    // Delete all books handler
+    $('#deleteAllBooks').click(function() {
+        if (confirm('Are you sure you want to delete ALL books? This cannot be undone!')) {
+            $.ajax({
+                url: '/api/books',
+                type: 'delete',
+                success: function(data) {
+                    loadBooks();
+                    $('#detailComments').html(`
+                        <div class="alert alert-success">
+                            ${data}
+                        </div>
+                    `);
+                }
+            });
+        }
     });
-  }); 
-  
 });

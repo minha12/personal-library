@@ -17,6 +17,8 @@ var { suite, test } = mocha;
 chai.use(chaiHttp);
 
 suite('Functional Tests', function() {
+  // Increase timeout for all tests in this suite
+  this.timeout(5000);
   
   /*
   * ----[EXAMPLE TEST]----

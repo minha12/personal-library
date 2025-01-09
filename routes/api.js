@@ -11,11 +11,20 @@ const client = new MongoClient(process.env.DB, {
   }
 });
 
+// Connect to MongoDB once
+let connected = false;
+async function connectDB() {
+  if (!connected) {
+    await client.connect();
+    connected = true;
+  }
+}
+
 module.exports = function(app) {
   app.route("/api/books")
     .get(async function(req, res) {
       try {
-        await client.connect();
+        await connectDB();
         const collection = client.db("personal-library").collection("BookLib");
         const books = await collection.find({}).toArray();
         if (books.length === 0) {
@@ -41,7 +50,7 @@ module.exports = function(app) {
       }
       
       try {
-        await client.connect();
+        await connectDB();
         const collection = client.db("personal-library").collection("BookLib");
         const book = { title, comments: [] };
         const result = await collection.insertOne(book);
@@ -54,7 +63,7 @@ module.exports = function(app) {
 
     .delete(async function(req, res) {
       try {
-        await client.connect();
+        await connectDB();
         const collection = client.db("personal-library").collection("BookLib");
         await collection.deleteMany({});
         res.send('Complete delete successful');
@@ -72,7 +81,7 @@ module.exports = function(app) {
       }
 
       try {
-        await client.connect();
+        await connectDB();
         const collection = client.db("personal-library").collection("BookLib");
         const book = await collection.findOne({ 
           _id: ObjectId.isValid(bookid) ? new ObjectId(bookid) : bookid 
@@ -99,7 +108,7 @@ module.exports = function(app) {
       }
 
       try {
-        await client.connect();
+        await connectDB();
         const collection = client.db("personal-library").collection("BookLib");
         const result = await collection.findOneAndUpdate(
           { _id: new ObjectId(bookid) },
@@ -121,7 +130,7 @@ module.exports = function(app) {
       const bookid = req.params.id;
       
       try {
-        await client.connect();
+        await connectDB();
         const collection = client.db("personal-library").collection("BookLib");
         const result = await collection.deleteOne({ _id: new ObjectId(bookid) });
         

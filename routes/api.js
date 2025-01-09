@@ -1,176 +1,137 @@
-/*
- *
- *
- *       Complete the API routing below
- *
- *
- */
+'use strict';
 
-"use strict";
+const { MongoClient, ObjectId, ServerApiVersion } = require('mongodb');
+require('dotenv').config();
 
-var expect = require("chai").expect;
-var MongoClient = require("mongodb").MongoClient;
-var ObjectId = require("mongodb").ObjectId;
-const MONGODB_CONNECTION_STRING = process.env.DB;
-//Example connection: MongoClient.connect(MONGODB_CONNECTION_STRING, function(err, db) {});
+const client = new MongoClient(process.env.DB, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
 
 module.exports = function(app) {
-  app
-    .route("/api/books")
-    //4.I can get /api/books to retrieve an aray of all books containing
-    //title, _id, & commentcount
-    .get(function(req, res) {
-      //response will be array of book objects
-      //json res format: [{"_id": bookid, "title": book_title, "commentcount": num_of_comments },...]
-      MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) => {
-        if (err) console.log("Database error: " + err);
-        else {
-          console.log("Successfully connected to MongoDB");
-          db.collection("BookLib")
-            .find({})
-            .toArray((err, docs) => {
-              if (err) console.log("Error while finding books");
-              else {
-                
-                let result = {}
-                result = docs.map(item => {
-                  item.commentcount = item.comments ? item.comments.length : 0 
-                  return item
-                })
-                console.log(result);
-                res.send(result);
-              }
-            });
+  app.route("/api/books")
+    .get(async function(req, res) {
+      try {
+        await client.connect();
+        const collection = client.db("personal-library").collection("BookLib");
+        const books = await collection.find({}).toArray();
+        if (books.length === 0) {
+          return res.json([]); // Return empty array if no books
         }
-      });
-    })
-
-    //I can post a title to /api/books to add a book and returned will be the object
-    //with the title and a unique _id.
-    .post(function(req, res) {
-      var title = req.body.title;
-      //response will contain new book object including atleast _id and title
-      console.log("Title: " + title);
-      if (!title) {
-        console.log("Please enter a book title");
-        res.send("Please enter a book title");
-      } else {
-        var book = { title: title };
-        MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) => {
-          if (err) console.log("Database error: " + err);
-          else {
-            console.log("Successfully connected to MongoDB");
-            db.collection("BookLib").insertOne(book, (err, doc) => {
-              if (err) console.log("Error while inserting new book: " + err);
-              else {
-                console.log(book);
-                res.send(book);
-              }
-            });
-          }
-        });
+        const result = books.map(book => ({
+          _id: book._id,
+          title: book.title,
+          comments: book.comments || [],
+          commentcount: book.comments ? book.comments.length : 0
+        }));
+        res.json(result);
+      } catch (err) {
+        console.error('Database error:', err);
+        res.status(500).json({ error: 'Error accessing database' });
       }
     })
 
-    .delete(function(req, res) {
-      //if successful response will be 'complete delete successful'
-      MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) => {
-        if(err) console.log(err)
-        else{
-          console.log('Connected to DB')
-          db.collection('BookLib').deleteMany({}, (err, doc) => {
-            if(err) { 
-              console.log('Complete delete unsuccessful')
-              res.send('Complete delete unsuccessful')
-            } else { 
-              console.log('Complete delete successful')
-              res.send('Complete delete successful')}
-          })
-        }
-      })
+    .post(async function(req, res) {
+      const title = req.body.title;
+      if (!title) {
+        return res.send("Please enter a book title");
+      }
+      
+      try {
+        await client.connect();
+        const collection = client.db("personal-library").collection("BookLib");
+        const book = { title, comments: [] };
+        const result = await collection.insertOne(book);
+        res.json(book);
+      } catch (err) {
+        console.error('Error inserting book:', err);
+        res.status(500).json({ error: 'Could not insert book' });
+      }
+    })
+
+    .delete(async function(req, res) {
+      try {
+        await client.connect();
+        const collection = client.db("personal-library").collection("BookLib");
+        await collection.deleteMany({});
+        res.send('Complete delete successful');
+      } catch (err) {
+        console.error('Delete error:', err);
+        res.send('Complete delete unsuccessful');
+      }
     });
 
-  app
-    .route("/api/books/:id")
-    .get(function(req, res) {
-      var bookid = req.params.id;
-      //json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}
-      if(!bookid) {
-        res.send('In put book ID to search')
-      } else{
+  app.route("/api/books/:id")
+    .get(async function(req, res) {
+      const bookid = req.params.id;
+      if (!bookid) {
+        return res.send('Input book ID to search');
+      }
+
+      try {
+        await client.connect();
+        const collection = client.db("personal-library").collection("BookLib");
+        const book = await collection.findOne({ 
+          _id: ObjectId.isValid(bookid) ? new ObjectId(bookid) : bookid 
+        });
         
-        if(ObjectId.isValid(bookid)) {
-          bookid = ObjectId(bookid)
+        if (!book) {
+          return res.send('Book ID does not exist');
         }
-        MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) => {
-          if(err) console.log('Database error: ' + err)
-          else{
-            db.collection('BookLib').findOne({_id: bookid}, (err, doc) => {
-              if(err) console.log(err)
-              
-              if(!doc) {
-                console.log('Book ID does not exist')
-                res.send('Book ID does not exist')
-              }else {
-                doc.comments = doc.comments ? doc.comments : []
-                console.log(doc)
-                res.send(doc)
-              }
-              
-            })
-          }
-        })
+        
+        book.comments = book.comments || [];
+        res.json(book);
+      } catch (err) {
+        console.error('Error finding book:', err);
+        res.status(500).json({ error: 'Error accessing database' });
       }
     })
 
-    .post(function(req, res) {
-      var bookid = req.params.id;
-      var comment = req.body.comment;
-      //json res format same as .get
-      if(!bookid) {
-        console.log('Inseart a book ID to add comments')
-        res.send('Insert a book ID to add comments')
-      }else{
-        MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) => {
-          if(err) console.log('Database error: ' + err)
-          else{
-            console.log('Successfully connect to MongoDB')
-            db.collection('BookLib').findAndModify(
-              {_id: ObjectId(bookid)},
-              {},
-              {$push: {comments: comment}},
-              {new: true},
-              (err, doc) => {
-                if(err){
-                  console.log('Adding comment unsuccessful')
-                  res.send('Adding comment unsuccessful')
-                }else{
-                  console.log(doc)
-                  res.send(doc.value)
-                }
-              }
-            )
-          }
-        })
+    .post(async function(req, res) {
+      const bookid = req.params.id;
+      const comment = req.body.comment;
+      
+      if (!bookid) {
+        return res.send('Insert a book ID to add comments');
+      }
+
+      try {
+        await client.connect();
+        const collection = client.db("personal-library").collection("BookLib");
+        const result = await collection.findOneAndUpdate(
+          { _id: new ObjectId(bookid) },
+          { $push: { comments: comment } },
+          { returnDocument: 'after' }
+        );
+        
+        if (!result) {
+          return res.send('Adding comment unsuccessful');
+        }
+        res.json(result);
+      } catch (err) {
+        console.error('Error adding comment:', err);
+        res.send('Adding comment unsuccessful');
       }
     })
 
-    .delete(function(req, res) {
-      var bookid = req.params.id;
-      //if successful response will be 'delete successful'
-      MongoClient.connect(MONGODB_CONNECTION_STRING, (err, db) => {
-        if(err) console.log(err)
-        else{
-          console.log('Connected to MongoDB')
-          db.collection('BookLib').remove({_id: ObjectId(bookid)}, (err, doc) => {
-            if(err) { 
-              console.log('Delete Unsuccessful')
-              res.send('Delete Unsuccessful') 
-            } else { 
-              console.log('Delete successful')
-              res.send('Delete successful') }
-          })
+    .delete(async function(req, res) {
+      const bookid = req.params.id;
+      
+      try {
+        await client.connect();
+        const collection = client.db("personal-library").collection("BookLib");
+        const result = await collection.deleteOne({ _id: new ObjectId(bookid) });
+        
+        if (result.deletedCount === 0) {
+          return res.send('Delete unsuccessful');
         }
-      })
+        res.send('Delete successful');
+      } catch (err) {
+        console.error('Delete error:', err);
+        res.send('Delete unsuccessful');
+      }
     });
 };

@@ -2,7 +2,7 @@
 
 A full-stack JavaScript application for managing a personal book collection with commenting functionality.
 
-![Project Preview](preview.png)
+![Project Preview](assets/personal-library.png)
 
 ## Technology Stack
 
